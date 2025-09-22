@@ -1,0 +1,14 @@
+{
+    "outputFileName": "estrutura-de-dados",
+    "buildDir": "build",
+    "compiler": "g++",
+    "compilerFlags": ["-std=c++20", "-Wall", "-Wextra"],
+    "includeDirs": ["include", "vcpkg_installed/arm64-osx/include"],
+    "libDirs": [],
+    "libs": [],
+    "devLibDirs": [
+        "vcpkg_installed/arm64-osx/lib",
+        "vcpkg_installed/arm64-osx/lib/manual-link"
+    ],
+    "devLibs": ["Catch2Main", "Catch2"]
+}

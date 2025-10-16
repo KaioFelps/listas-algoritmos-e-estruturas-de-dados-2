@@ -1,2 +1,4 @@
 easexx
-vcpkg_installed
+vcpkg_installed/
+build/
+.DS_Store

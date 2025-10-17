@@ -10,9 +10,9 @@ namespace core::utils
  * Exchanges positions of the elements at the `lhp` and `rhp` positions
  * in `list`.
  */
-template <typename T> void swap(T &&list_, const size_t lhp, const size_t rhp)
+template <typename T>
+void swap(std::span<T> list, const size_t lhp, const size_t rhp)
 {
-  auto list = std::span(list_);
   const auto temporary_value = list[lhp];
   list[lhp] = list[rhp];
   list[rhp] = temporary_value;
@@ -22,9 +22,8 @@ template <typename T> void swap(T &&list_, const size_t lhp, const size_t rhp)
  * Stringifies and print each element from `vector` in JSON format.
  */
 template <typename T>
-void print_vector(const T &vector_window, bool breakline = true)
+void print_vector(const std::span<const T> vector, bool breakline = true)
 {
-  const auto vector = std::span{vector_window};
   std::cout << "[";
 
   auto iterator = vector.begin();

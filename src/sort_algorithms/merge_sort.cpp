@@ -1,8 +1,4 @@
-#include "sort_algorithms.hpp"
 #include <iostream>
-
-namespace core::sort_algorithms
-{
 
 void static merge(int *v, int p, int q, int r)
 {
@@ -19,7 +15,6 @@ void static merge(int *v, int p, int q, int r)
   int *d = new int[n2];
   for (int j = 0; j < n2; j++)
     d[j] = v[q + 1 + j];
-
   int k = p;
   int i = 0, j = 0;
 
@@ -64,5 +59,3 @@ void merge_sort(int *v, int p, int r)
     merge(v, p, m, r);
   }
 }
-
-} // namespace core::sort_algorithms

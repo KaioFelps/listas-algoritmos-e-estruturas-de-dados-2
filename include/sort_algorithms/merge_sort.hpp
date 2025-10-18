@@ -6,7 +6,6 @@
 
 namespace core::sort_algorithms
 {
-void merge_sort(int *arr, int p, int r);
 
 /// Copies `subvector_size` elements from `vector` to a new heap-allocated
 /// subvector.
@@ -35,13 +34,7 @@ std::unique_ptr<T[]> ___copy_to_subvector(const T *vector,
                                           const size_t subvector_size)
 {
   auto subvector = std::unique_ptr<T[]>(new T[subvector_size]);
-
-  for (size_t i = 0; i < subvector_size; i++)
-  {
-    subvector[i] = *vector;
-    vector = vector + 1;
-  }
-
+  std::copy(vector, vector + subvector_size, subvector.get());
   return subvector;
 }
 
@@ -57,6 +50,8 @@ template <typename T> struct ___InterleaveArgs
   size_t vector_central_element_pos;
 };
 
+/// Replace `args.target_vector` values interleaving values from
+/// `args.left_subvec` and `args.right_subvec` in a sorted way.
 template <typename T> void ___interleave(___InterleaveArgs<T> args)
 {
   size_t left_cursor = 0, right_cursor = 0,
@@ -95,7 +90,9 @@ template <typename T> void ___interleave(___InterleaveArgs<T> args)
   }
 }
 
-/**
+/** Splits and interleave a vector, sorting it with the two (already sorted)
+ * halves from itself.
+ *
  * @param subvector A heap-allocated C array of `T`.
  * @param first_element_pos The index of subvector's first element (not
  * necessarily `0`).
@@ -113,15 +110,17 @@ void ___merge(T *subvector, const size_t first_element_pos,
   // size = right_limit - left_limit + 1.
   //
   // The first element index from the right subvector is
-  // central_element_pos + 1. Therefore, the formula would be:
-  // size = last_element_pos - (central_element_pos + 1) + 1,
+  // central_element_pos + 1. Therefore, the formula becomes:
+  // size = last_element_pos - (central_element_pos + 1) + 1
   //      = last_element_pos - central_element_pos -1 + 1
   //      = last_element_pos - central_element_pos
 
   const auto left_subvector_size = central_element_pos - first_element_pos + 1;
   const auto right_subvector_size = last_element_pos - central_element_pos;
 
-  auto left_subvec = ___copy_to_subvector<T>(subvector, left_subvector_size);
+  auto left_subvec = ___copy_to_subvector<T>(subvector + first_element_pos,
+                                             left_subvector_size);
+
   auto right_subvec = ___copy_to_subvector<T>(
       subvector + central_element_pos + 1, right_subvector_size);
 
@@ -141,5 +140,23 @@ void ___merge(T *subvector, const size_t first_element_pos,
  * An implementation of Merge Sort with no sentinels usage,
  * making it appliable to complex — but comparable — types.
  */
-template <typename T> void merge_sort() {}
+template <typename T>
+void merge_sort(std::span<T> &vector, const size_t first_element_pos,
+                const size_t last_element_pos)
+{
+  if (first_element_pos >= last_element_pos) return;
+
+  const auto center_element_pos = (first_element_pos + last_element_pos) / 2;
+  merge_sort(vector, first_element_pos, center_element_pos);
+  merge_sort(vector, center_element_pos + 1, last_element_pos);
+
+  ___merge(vector.data(), first_element_pos, center_element_pos,
+           last_element_pos);
+}
+
+template <typename T> void merge_sort(std::span<T> vector)
+{
+  return merge_sort(vector, 0, vector.size() - 1);
+}
+
 } // namespace core::sort_algorithms

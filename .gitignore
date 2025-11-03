@@ -2,3 +2,4 @@ easexx
 vcpkg_installed/
 build/
 .DS_Store
+.vscode/

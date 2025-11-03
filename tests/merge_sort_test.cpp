@@ -118,3 +118,17 @@ TEST_CASE("it should correctly sort and merge an array",
     }
   }
 }
+
+TEST_CASE("it should count the inversions occurrence in the given vector",
+          "[merge_sort, external, internal, topic3:ex1]")
+{
+  int arr[] = {3, 1, 2, 5, 4};
+  int arr_2[] = {3, 2, 1};
+
+  uint8_t expected_inversions_count = 3;
+
+  auto metadata_1 = core::sort_algorithms::merge_sort<int>(arr);
+  auto metadata_2 = core::sort_algorithms::merge_sort<int>(arr_2);
+  REQUIRE(metadata_1.inversions_count == expected_inversions_count);
+  REQUIRE(metadata_2.inversions_count == expected_inversions_count);
+}

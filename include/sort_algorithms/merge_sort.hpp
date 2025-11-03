@@ -38,6 +38,11 @@ std::unique_ptr<T[]> ___copy_to_subvector(const T *vector,
   return subvector;
 }
 
+typedef struct
+{
+  size_t inversions_count;
+} MergeSortResultMetadata;
+
 template <typename T> struct ___InterleaveArgs
 {
   T *target_vector;
@@ -48,6 +53,7 @@ template <typename T> struct ___InterleaveArgs
   size_t vector_first_element_pos;
   size_t vector_last_element_pos;
   size_t vector_central_element_pos;
+  MergeSortResultMetadata *meta;
 };
 
 /// Replace `args.target_vector` values interleaving values from
@@ -69,6 +75,11 @@ template <typename T> void ___interleave(___InterleaveArgs<T> args)
     {
       args.target_vector[cursor] = args.left_subvec[left_cursor++];
       continue;
+    }
+
+    if (args.meta)
+    {
+      args.meta->inversions_count += (args.left_subvector_size - left_cursor);
     }
 
     args.target_vector[cursor] = args.right_subvec[right_cursor++];
@@ -104,7 +115,8 @@ template <typename T> void ___interleave(___InterleaveArgs<T> args)
  */
 template <typename T>
 void ___merge(T *subvector, const size_t first_element_pos,
-              const size_t central_element_pos, const size_t last_element_pos)
+              const size_t central_element_pos, const size_t last_element_pos,
+              MergeSortResultMetadata *meta = nullptr)
 {
   // The math for getting any vector range size is
   // size = right_limit - left_limit + 1.
@@ -133,6 +145,7 @@ void ___merge(T *subvector, const size_t first_element_pos,
       .left_subvector_size = left_subvector_size,
       .right_subvec = std::move(right_subvec),
       .right_subvector_size = right_subvector_size,
+      .meta = meta,
   });
 }
 
@@ -142,21 +155,26 @@ void ___merge(T *subvector, const size_t first_element_pos,
  */
 template <typename T>
 void merge_sort(std::span<T> &vector, const size_t first_element_pos,
-                const size_t last_element_pos)
+                const size_t last_element_pos,
+                MergeSortResultMetadata *meta = nullptr)
 {
   if (first_element_pos >= last_element_pos) return;
 
   const auto center_element_pos = (first_element_pos + last_element_pos) / 2;
-  merge_sort(vector, first_element_pos, center_element_pos);
-  merge_sort(vector, center_element_pos + 1, last_element_pos);
+  merge_sort(vector, first_element_pos, center_element_pos, meta);
+  merge_sort(vector, center_element_pos + 1, last_element_pos, meta);
 
   ___merge(vector.data(), first_element_pos, center_element_pos,
-           last_element_pos);
+           last_element_pos, meta);
+
+  return;
 }
 
-template <typename T> void merge_sort(std::span<T> vector)
+template <typename T> MergeSortResultMetadata merge_sort(std::span<T> vector)
 {
-  return merge_sort(vector, 0, vector.size() - 1);
+  MergeSortResultMetadata metadata = {.inversions_count = 0};
+  merge_sort(vector, 0, vector.size() - 1, &metadata);
+  return metadata;
 }
 
 } // namespace core::sort_algorithms

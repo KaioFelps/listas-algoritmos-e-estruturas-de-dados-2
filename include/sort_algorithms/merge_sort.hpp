@@ -60,6 +60,29 @@ template <typename T> struct ___InterleaveArgs
 /// `args.left_subvec` and `args.right_subvec` in a sorted way.
 template <typename T> void ___interleave(___InterleaveArgs<T> args)
 {
+  // optimization for unitary arrays comparison && interleaving
+  if (args.left_subvector_size == 1 && args.right_subvector_size == 1)
+  {
+    auto &left_el = args.left_subvec[0];
+    auto &right_el = args.right_subvec[0];
+
+    auto cursor = args.vector_first_element_pos;
+
+    if (left_el <= right_el)
+    {
+      args.target_vector[cursor++] = left_el;
+      args.target_vector[cursor] = right_el;
+      return;
+    }
+
+    args.target_vector[cursor++] = right_el;
+    args.target_vector[cursor] = left_el;
+
+    if (args.meta) args.meta->inversions_count++;
+
+    return;
+  }
+
   size_t left_cursor = 0, right_cursor = 0,
          cursor = args.vector_first_element_pos;
 

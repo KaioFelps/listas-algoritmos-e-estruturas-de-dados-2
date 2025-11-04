@@ -3,7 +3,8 @@
 #include <catch2/catch_all.hpp>
 #include <span>
 
-TEST_CASE("it should order vectors", "[merge_sort, external]")
+TEST_CASE("it should order vectors",
+          "[merge_sort, iteratively_merge_sort, external]")
 {
   auto unsorted_array = core::utils::generate_random_ints_vector(30, 10, 100);
 
@@ -12,12 +13,24 @@ TEST_CASE("it should order vectors", "[merge_sort, external]")
   unsorted_array[1] = 0;
   REQUIRE_FALSE(std::is_sorted(unsorted_array.begin(), unsorted_array.end()));
 
-  core::sort_algorithms::merge_sort<int>(unsorted_array);
-  REQUIRE(std::is_sorted(unsorted_array.begin(), unsorted_array.end()));
+  SECTION("recursively")
+  {
+    auto array_copy = unsorted_array;
+    core::sort_algorithms::merge_sort<int>(array_copy);
+    REQUIRE(std::is_sorted(array_copy.begin(), array_copy.end()));
+  }
+
+  SECTION("iteratively")
+  {
+    auto array_copy = unsorted_array;
+    core::sort_algorithms::iteratively_merge_sort<int>(array_copy);
+
+    REQUIRE(std::is_sorted(array_copy.begin(), array_copy.end()));
+  }
 }
 
 TEST_CASE("it should create subvectors from some window of a vector",
-          "[merge_sort, internal]")
+          "[merge_sort, ___copy_to_subvector, internal]")
 {
   using namespace core::sort_algorithms;
   const int full_array[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -52,7 +65,7 @@ TEST_CASE("it should create subvectors from some window of a vector",
 }
 
 TEST_CASE("it should correctly interleave the sorted subvectors",
-          "[merge_sort, internal]")
+          "[merge_sort, ___interleave, internal]")
 {
   using namespace core::sort_algorithms;
   int initial_vector[] = {10, 11, 12, 4, 5, 6};
@@ -72,7 +85,7 @@ TEST_CASE("it should correctly interleave the sorted subvectors",
 }
 
 TEST_CASE("it should correctly sort and merge an array",
-          "[merge_sort, internal]")
+          "[merge_sort, ___merge, internal]")
 {
   using namespace core::sort_algorithms;
 
@@ -122,13 +135,37 @@ TEST_CASE("it should correctly sort and merge an array",
 TEST_CASE("it should count the inversions occurrence in the given vector",
           "[merge_sort, external, internal, topic3:ex1]")
 {
-  int arr[] = {3, 1, 2, 5, 4};
-  int arr_2[] = {3, 2, 1};
+  int arr[5] = {3, 1, 2, 5, 4};
+  int arr_2[3] = {3, 2, 1};
 
   uint8_t expected_inversions_count = 3;
 
-  auto metadata_1 = core::sort_algorithms::merge_sort<int>(arr);
-  auto metadata_2 = core::sort_algorithms::merge_sort<int>(arr_2);
-  REQUIRE(metadata_1.inversions_count == expected_inversions_count);
-  REQUIRE(metadata_2.inversions_count == expected_inversions_count);
+  SECTION("recursively")
+  {
+    int copy_5_sized[5];
+    int copy_3_sized[3];
+
+    std::copy(arr, arr + 5, copy_5_sized);
+    std::copy(arr_2, arr_2 + 3, copy_3_sized);
+
+    auto metadata_1 = core::sort_algorithms::merge_sort<int>(copy_5_sized);
+    auto metadata_2 = core::sort_algorithms::merge_sort<int>(copy_3_sized);
+    REQUIRE(metadata_1.inversions_count == expected_inversions_count);
+    REQUIRE(metadata_2.inversions_count == expected_inversions_count);
+  }
+
+  SECTION("iteratively")
+  {
+    using core::sort_algorithms::iteratively_merge_sort;
+    int copy_5_sized[5];
+    int copy_3_sized[3];
+
+    std::copy(arr, arr + 5, copy_5_sized);
+    std::copy(arr_2, arr_2 + 3, copy_3_sized);
+
+    auto metadata_1 = iteratively_merge_sort<int>(copy_5_sized);
+    auto metadata_2 = iteratively_merge_sort<int>(copy_3_sized);
+    REQUIRE(metadata_1.inversions_count == expected_inversions_count);
+    REQUIRE(metadata_2.inversions_count == expected_inversions_count);
+  }
 }

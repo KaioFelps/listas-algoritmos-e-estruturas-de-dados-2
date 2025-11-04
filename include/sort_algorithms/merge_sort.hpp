@@ -159,7 +159,7 @@ void ___merge(T *subvector, const size_t first_element_pos,
   auto right_subvec = ___copy_to_subvector<T>(
       subvector + central_element_pos + 1, right_subvector_size);
 
-  ___interleave(___InterleaveArgs<int>{
+  ___interleave(___InterleaveArgs<T>{
       .target_vector = subvector,
       .vector_central_element_pos = central_element_pos,
       .vector_first_element_pos = first_element_pos,
@@ -195,8 +195,41 @@ void merge_sort(std::span<T> &vector, const size_t first_element_pos,
 
 template <typename T> MergeSortResultMetadata merge_sort(std::span<T> vector)
 {
-  MergeSortResultMetadata metadata = {.inversions_count = 0};
+  auto metadata = MergeSortResultMetadata{.inversions_count = 0};
   merge_sort(vector, 0, vector.size() - 1, &metadata);
+  return metadata;
+}
+
+template <typename T>
+MergeSortResultMetadata iteratively_merge_sort(std::span<T> vector)
+{
+  auto metadata = MergeSortResultMetadata{.inversions_count = 0};
+
+  if (vector.size() <= 1) return metadata;
+
+  for (size_t subvec_size = 1; subvec_size < vector.size(); subvec_size *= 2)
+  {
+    for (size_t left_subvec_begin = 0; left_subvec_begin < vector.size();
+         left_subvec_begin += 2 * subvec_size)
+    {
+      auto right_subvec_begin = left_subvec_begin + subvec_size;
+      auto last_element_pos = right_subvec_begin + subvec_size - 1;
+
+      if (last_element_pos >= vector.size())
+      {
+        last_element_pos = vector.size() - 1;
+      }
+
+      auto right_subvec_will_be_empty = right_subvec_begin >= vector.size();
+      if (right_subvec_will_be_empty) continue;
+
+      auto center_element_pos = right_subvec_begin - 1;
+
+      ___merge(vector.data(), left_subvec_begin, center_element_pos,
+               last_element_pos, &metadata);
+    }
+  }
+
   return metadata;
 }
 

@@ -99,7 +99,7 @@ template <typename T> void quick_sort(std::span<T> vec, size_t pivot_pos)
 
 template <typename T> void quick_sort(std::span<T> vec)
 {
-  quick_sort(vec, vec.size() > 0 ? vec.size() - 1 : 0);
+  if (vec.size() > 0) quick_sort(vec, vec.size() - 1);
 }
 
 } // namespace core::sort_algorithms

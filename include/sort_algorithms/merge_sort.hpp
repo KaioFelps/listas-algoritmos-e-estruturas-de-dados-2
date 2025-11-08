@@ -4,7 +4,7 @@
 #include <memory>
 #include <stddef.h>
 
-namespace core::sort_algorithms
+namespace core::sort_algorithms::internal
 {
 
 /// Copies `subvector_size` elements from `vector` to a new heap-allocated
@@ -24,14 +24,14 @@ namespace core::sort_algorithms
 /// ```cpp
 /// using namespace core::sort_algorithms;
 /// const int arr[] = {1, 2, 3, 4, 5, 6};
-/// const auto subset = ___copy_to_subvector(arr + 1, 3);
+/// const auto subset = copy_to_subvector(arr + 1, 3);
 ///
 /// core::utils::print_vector(subset, false);
 /// // "[2, 3, 4]"
 /// ```
 template <typename T>
-std::unique_ptr<T[]> ___copy_to_subvector(const T *vector,
-                                          const size_t subvector_size)
+std::unique_ptr<T[]> copy_to_subvector(const T *vector,
+                                       const size_t subvector_size)
 {
   auto subvector = std::unique_ptr<T[]>(new T[subvector_size]);
   std::copy(vector, vector + subvector_size, subvector.get());
@@ -43,7 +43,7 @@ typedef struct
   size_t inversions_count;
 } MergeSortResultMetadata;
 
-template <typename T> struct ___InterleaveArgs
+template <typename T> struct InterleaveArgs
 {
   T *target_vector;
   const std::unique_ptr<T[]> right_subvec;
@@ -58,7 +58,7 @@ template <typename T> struct ___InterleaveArgs
 
 /// Replace `args.target_vector` values interleaving values from
 /// `args.left_subvec` and `args.right_subvec` in a sorted way.
-template <typename T> void ___interleave(___InterleaveArgs<T> args)
+template <typename T> void interleave(InterleaveArgs<T> args)
 {
   // optimization for unitary arrays comparison && interleaving
   if (args.left_subvector_size == 1 && args.right_subvector_size == 1)
@@ -137,9 +137,9 @@ template <typename T> void ___interleave(___InterleaveArgs<T> args)
  * necessarily `subvector.size() - 1`).
  */
 template <typename T>
-void ___merge(T *subvector, const size_t first_element_pos,
-              const size_t central_element_pos, const size_t last_element_pos,
-              MergeSortResultMetadata *meta = nullptr)
+void merge(T *subvector, const size_t first_element_pos,
+           const size_t central_element_pos, const size_t last_element_pos,
+           MergeSortResultMetadata *meta = nullptr)
 {
   // The math for getting any vector range size is
   // size = right_limit - left_limit + 1.
@@ -153,13 +153,13 @@ void ___merge(T *subvector, const size_t first_element_pos,
   const auto left_subvector_size = central_element_pos - first_element_pos + 1;
   const auto right_subvector_size = last_element_pos - central_element_pos;
 
-  auto left_subvec = ___copy_to_subvector<T>(subvector + first_element_pos,
-                                             left_subvector_size);
+  auto left_subvec =
+      copy_to_subvector<T>(subvector + first_element_pos, left_subvector_size);
 
-  auto right_subvec = ___copy_to_subvector<T>(
-      subvector + central_element_pos + 1, right_subvector_size);
+  auto right_subvec = copy_to_subvector<T>(subvector + central_element_pos + 1,
+                                           right_subvector_size);
 
-  ___interleave(___InterleaveArgs<T>{
+  interleave(InterleaveArgs<T>{
       .target_vector = subvector,
       .vector_central_element_pos = central_element_pos,
       .vector_first_element_pos = first_element_pos,
@@ -172,6 +172,11 @@ void ___merge(T *subvector, const size_t first_element_pos,
   });
 }
 
+} // namespace core::sort_algorithms::internal
+
+namespace core::sort_algorithms
+{
+
 /**
  * An implementation of Merge Sort with no sentinels usage,
  * making it appliable to complex — but comparable — types.
@@ -179,30 +184,36 @@ void ___merge(T *subvector, const size_t first_element_pos,
 template <typename T>
 void merge_sort(std::span<T> &vector, const size_t first_element_pos,
                 const size_t last_element_pos,
-                MergeSortResultMetadata *meta = nullptr)
+                internal::MergeSortResultMetadata *meta = nullptr)
 {
+  using namespace internal;
+
   if (first_element_pos >= last_element_pos) return;
 
   const auto center_element_pos = (first_element_pos + last_element_pos) / 2;
   merge_sort(vector, first_element_pos, center_element_pos, meta);
   merge_sort(vector, center_element_pos + 1, last_element_pos, meta);
 
-  ___merge(vector.data(), first_element_pos, center_element_pos,
-           last_element_pos, meta);
+  merge(vector.data(), first_element_pos, center_element_pos, last_element_pos,
+        meta);
 
   return;
 }
 
-template <typename T> MergeSortResultMetadata merge_sort(std::span<T> vector)
+template <typename T>
+internal::MergeSortResultMetadata merge_sort(std::span<T> vector)
 {
+  using namespace internal;
   auto metadata = MergeSortResultMetadata{.inversions_count = 0};
   merge_sort(vector, 0, vector.size() - 1, &metadata);
   return metadata;
 }
 
 template <typename T>
-MergeSortResultMetadata iteratively_merge_sort(std::span<T> vector)
+internal::MergeSortResultMetadata iteratively_merge_sort(std::span<T> vector)
 {
+  using namespace internal;
+
   auto metadata = MergeSortResultMetadata{.inversions_count = 0};
 
   if (vector.size() <= 1) return metadata;
@@ -225,8 +236,8 @@ MergeSortResultMetadata iteratively_merge_sort(std::span<T> vector)
 
       auto center_element_pos = right_subvec_begin - 1;
 
-      ___merge(vector.data(), left_subvec_begin, center_element_pos,
-               last_element_pos, &metadata);
+      merge(vector.data(), left_subvec_begin, center_element_pos,
+            last_element_pos, &metadata);
     }
   }
 

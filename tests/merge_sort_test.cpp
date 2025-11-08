@@ -30,16 +30,17 @@ TEST_CASE("it should order vectors",
 }
 
 TEST_CASE("it should create subvectors from some window of a vector",
-          "[merge_sort, ___copy_to_subvector, internal]")
+          "[merge_sort, copy_to_subvector, internal]")
 {
   using namespace core::sort_algorithms;
+  using namespace internal;
   const int full_array[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
   const size_t subvector_size = 3;
 
   SECTION("starting from index 0")
   {
-    auto subvector = ___copy_to_subvector(full_array, subvector_size);
+    auto subvector = copy_to_subvector(full_array, subvector_size);
     auto subvector_as_span =
         std::span<const int>(subvector.get(), subvector_size);
 
@@ -52,7 +53,7 @@ TEST_CASE("it should create subvectors from some window of a vector",
 
   SECTION("starting from some arbitrary index")
   {
-    auto subvector = ___copy_to_subvector(full_array + 3, subvector_size);
+    auto subvector = copy_to_subvector(full_array + 3, subvector_size);
     auto subvector_as_span =
         std::span<const int>(subvector.get(), subvector_size);
 
@@ -65,14 +66,16 @@ TEST_CASE("it should create subvectors from some window of a vector",
 }
 
 TEST_CASE("it should correctly interleave the sorted subvectors",
-          "[merge_sort, ___interleave, internal]")
+          "[merge_sort, interleave, internal]")
 {
   using namespace core::sort_algorithms;
+  using namespace internal;
+
   int initial_vector[] = {10, 11, 12, 4, 5, 6};
 
-  ___interleave(___InterleaveArgs<int>{
-      .left_subvec = ___copy_to_subvector(initial_vector, 3),
-      .right_subvec = ___copy_to_subvector(initial_vector + 3, 3),
+  interleave(InterleaveArgs<int>{
+      .left_subvec = copy_to_subvector(initial_vector, 3),
+      .right_subvec = copy_to_subvector(initial_vector + 3, 3),
       .left_subvector_size = 3,
       .right_subvector_size = 3,
       .target_vector = initial_vector,
@@ -85,23 +88,24 @@ TEST_CASE("it should correctly interleave the sorted subvectors",
 }
 
 TEST_CASE("it should correctly sort and merge an array",
-          "[merge_sort, ___merge, internal]")
+          "[merge_sort, merge, internal]")
 {
   using namespace core::sort_algorithms;
+  using namespace internal;
 
   SECTION("2-sized vectors")
   {
     SECTION("is unordered")
     {
       std::vector<int> vec = {2, 1};
-      ___merge(vec.data(), 0, 0, 1);
+      merge(vec.data(), 0, 0, 1);
       REQUIRE(std::ranges::equal(vec, std::span<const int>({1, 2})));
     }
 
     SECTION("is ordered")
     {
       std::vector<int> vec = {1, 2};
-      ___merge(vec.data(), 0, 0, 1);
+      merge(vec.data(), 0, 0, 1);
       REQUIRE(std::ranges::equal(vec, std::span<const int>({1, 2})));
     }
   }
@@ -112,9 +116,9 @@ TEST_CASE("it should correctly sort and merge an array",
     {
       std::vector<int> vec = {2, 0, 1};
 
-      ___merge(vec.data(), 0, 0, 1);
-      ___merge(vec.data(), 1, 1, 2);
-      ___merge(vec.data(), 0, 1, 2);
+      merge(vec.data(), 0, 0, 1);
+      merge(vec.data(), 1, 1, 2);
+      merge(vec.data(), 0, 1, 2);
 
       REQUIRE(std::ranges::equal(vec, std::span<const int>({0, 1, 2})));
     }
@@ -123,9 +127,9 @@ TEST_CASE("it should correctly sort and merge an array",
     {
       std::vector<int> vec = {0, 1, 2};
 
-      ___merge(vec.data(), 0, 0, 1);
-      ___merge(vec.data(), 1, 1, 2);
-      ___merge(vec.data(), 0, 1, 2);
+      merge(vec.data(), 0, 0, 1);
+      merge(vec.data(), 1, 1, 2);
+      merge(vec.data(), 0, 1, 2);
 
       REQUIRE(std::ranges::equal(vec, std::span<const int>({0, 1, 2})));
     }

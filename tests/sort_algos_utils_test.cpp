@@ -8,7 +8,7 @@ TEST_CASE("it should swap two elements from a vector",
   int arr[] = {10, 11, 12, 4, 5, 6};
   int expected_arr[] = {10, 11, 5, 4, 12, 6};
 
-  ___swap<int>(arr, 2, 4);
+  swap<int>(arr, 2, 4);
 
   REQUIRE(std::ranges::equal(arr, expected_arr));
 }

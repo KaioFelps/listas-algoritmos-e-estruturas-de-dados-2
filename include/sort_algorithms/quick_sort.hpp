@@ -20,7 +20,7 @@ template <typename T> size_t partition(std::span<T> vec, size_t pivot_pos)
   const auto last_element_pos = vec.size() - 1;
   if (pivot_pos != last_element_pos)
   {
-    internal::___swap(vec, pivot_pos, last_element_pos);
+    internal::swap(vec, pivot_pos, last_element_pos);
     pivot_pos = last_element_pos;
   }
 
@@ -39,11 +39,11 @@ template <typename T> size_t partition(std::span<T> vec, size_t pivot_pos)
 
     if (element > pivot) continue;
 
-    internal::___swap(vec, current_el_cursor, border_cursor);
+    internal::swap(vec, current_el_cursor, border_cursor);
     border_cursor++;
   }
 
-  internal::___swap(vec, pivot_pos, border_cursor);
+  internal::swap(vec, pivot_pos, border_cursor);
   return border_cursor;
 }
 

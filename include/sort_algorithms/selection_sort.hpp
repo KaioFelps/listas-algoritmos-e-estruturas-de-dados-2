@@ -30,7 +30,7 @@ template <typename T> void selection_sort(std::span<T> vector)
     auto biggest_el_from_subspan_pos =
         ___find_biggest_el_pos(vector.subspan(0, i + 1));
     if (biggest_el_from_subspan_pos == i) continue;
-    ___swap(vector, biggest_el_from_subspan_pos, i);
+    swap(vector, biggest_el_from_subspan_pos, i);
   }
 }
 

@@ -1,18 +1,10 @@
 #pragma once
 
+#include "sort_algorithms/utils.hpp"
 #include <span>
 
 namespace core::sort_algorithms
 {
-
-template <typename T>
-void ___swap(std::span<T> vector, size_t left_hand_el_pos,
-             size_t right_hand_el_pos)
-{
-  auto tmp = vector[left_hand_el_pos];
-  vector[left_hand_el_pos] = vector[right_hand_el_pos];
-  vector[right_hand_el_pos] = tmp;
-}
 
 template <typename T> size_t ___find_biggest_el_pos(const std::span<T> vector)
 {
@@ -30,6 +22,7 @@ template <typename T> size_t ___find_biggest_el_pos(const std::span<T> vector)
 
 template <typename T> void selection_sort(std::span<T> vector)
 {
+  using internal::___swap;
   if (vector.size() <= 1) return;
 
   for (size_t i = vector.size() - 1; i > 0; i--)
@@ -40,4 +33,5 @@ template <typename T> void selection_sort(std::span<T> vector)
     ___swap(vector, biggest_el_from_subspan_pos, i);
   }
 }
+
 } // namespace core::sort_algorithms

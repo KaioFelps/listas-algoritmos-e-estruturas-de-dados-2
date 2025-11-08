@@ -25,15 +25,3 @@ TEST_CASE("it should find the biggest element within a span",
 
   REQUIRE(biggest_el == 12);
 }
-
-TEST_CASE("it should swap two elements from a vector",
-          "[selection_sort, internal]")
-{
-  using namespace core::sort_algorithms;
-  int arr[] = {10, 11, 12, 4, 5, 6};
-  int expected_arr[] = {10, 11, 5, 4, 12, 6};
-
-  ___swap<int>(arr, 2, 4);
-
-  REQUIRE(std::ranges::equal(arr, expected_arr));
-}

@@ -19,8 +19,10 @@ TEST_CASE("it should find the biggest element within a span",
           "[selection_sort, internal]")
 {
   using namespace core::sort_algorithms;
+  using namespace internal;
+
   int arr[] = {10, 11, 12, 4, 5, 6};
-  auto biggest_el_pos = ___find_biggest_el_pos<int>(arr);
+  auto biggest_el_pos = find_biggest_el_pos<int>(arr);
   auto biggest_el = arr[biggest_el_pos];
 
   REQUIRE(biggest_el == 12);

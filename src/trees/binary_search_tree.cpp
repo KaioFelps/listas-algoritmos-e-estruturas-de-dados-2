@@ -8,7 +8,7 @@ const V *BinarySearchTree<K, V>::get(K key) const
 {
   if (!this->root.has_value()) return nullptr;
   const Node &root = *this->root;
-  return this->search(node);
+  return this->search(key, root);
 }
 
 template <typename K, typename V>
@@ -25,9 +25,9 @@ V *BinarySearchTree<K, V>::search(K &key, Node &node) const
   return nullptr;
 }
 
-template <typename K, typename V>
-void BinarySearchTree<K, V>::insert(K key, V value)
-{
-}
+// template <typename K, typename V>
+// void BinarySearchTree<K, V>::insert(K key, V value)
+// {
+// }
 
 } // namespace core::trees

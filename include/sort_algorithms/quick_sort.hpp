@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sort_algorithms/insertion_sort.hpp"
 #include "sort_algorithms/utils.hpp"
 #include <span>
 
@@ -79,10 +80,13 @@ QuickSortSubvectorsRanges calculate_subvectors(size_t vec_size,
 namespace core::sort_algorithms
 {
 
-template <typename T> void quick_sort(std::span<T> vec, size_t pivot_pos)
+template <typename T>
+void quick_sort(std::span<T> vec, size_t pivot_pos, uint8_t threshold)
 {
   using namespace internal;
+
   if (vec.size() <= 1) return;
+  if (vec.size() < threshold) return insertion_sort(vec);
 
   pivot_pos = partition(vec, pivot_pos);
 
@@ -97,9 +101,9 @@ template <typename T> void quick_sort(std::span<T> vec, size_t pivot_pos)
   quick_sort(right_subvec, right_subvec_pivot);
 }
 
-template <typename T> void quick_sort(std::span<T> vec)
+template <typename T> void quick_sort(std::span<T> vec, uint8_t threshold = 15)
 {
-  if (vec.size() > 0) quick_sort(vec, vec.size() - 1);
+  if (vec.size() > 0) quick_sort(vec, vec.size() - 1, threshold);
 }
 
 } // namespace core::sort_algorithms

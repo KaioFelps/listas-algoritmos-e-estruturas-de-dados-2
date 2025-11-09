@@ -13,6 +13,21 @@ TEST_CASE("it should sort a span-representable list")
   REQUIRE(std::is_sorted(input_vec.begin(), input_vec.end()));
 }
 
+TEST_CASE("Benchmarks de Alocação e Ordenação de Vetor", "[benchmark][vector]")
+{
+  const size_t VECTOR_SIZE = 100000;
+  const auto original_vec =
+      core::utils::generate_distinct_shuffled_ints_vector(VECTOR_SIZE, 1000);
+
+  BENCHMARK("Ordering 100_000 sized vector")
+  {
+    auto copy = original_vec;
+    return std::sort(copy.begin(), copy.end());
+  };
+
+  REQUIRE(original_vec.size() == VECTOR_SIZE);
+}
+
 TEST_CASE("it should ensure elements on pivot's left are smaller than it"
           "and those on its right are bigger than it",
           "[quick_sort, internal]")

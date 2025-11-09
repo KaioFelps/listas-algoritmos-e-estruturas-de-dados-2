@@ -85,8 +85,7 @@ void quick_sort(std::span<T> vec, size_t pivot_pos, uint8_t threshold)
 {
   using namespace internal;
 
-  if (vec.size() <= 1) return;
-  if (vec.size() < threshold) return insertion_sort(vec);
+  if (vec.size() <= threshold) return;
 
   pivot_pos = partition(vec, pivot_pos);
 
@@ -94,16 +93,18 @@ void quick_sort(std::span<T> vec, size_t pivot_pos, uint8_t threshold)
 
   auto left_subvec = vec.subspan(subvecs.left.offset, subvecs.left.count);
   const auto left_subvec_pivot = subvecs.left.count - 1;
-  quick_sort(left_subvec, left_subvec_pivot);
+  quick_sort(left_subvec, left_subvec_pivot, threshold);
 
   auto right_subvec = vec.subspan(subvecs.right.offset, subvecs.right.count);
   const auto right_subvec_pivot = subvecs.right.count - 1;
-  quick_sort(right_subvec, right_subvec_pivot);
+  quick_sort(right_subvec, right_subvec_pivot, threshold);
 }
 
 template <typename T> void quick_sort(std::span<T> vec, uint8_t threshold = 15)
 {
-  if (vec.size() > 0) quick_sort(vec, vec.size() - 1, threshold);
+  if (vec.size() <= 1) return;
+  quick_sort(vec, vec.size() - 1, threshold);
+  return insertion_sort(vec);
 }
 
 } // namespace core::sort_algorithms

@@ -8,7 +8,7 @@ using namespace internal;
 
 TEST_CASE("it should sort a span-representable list")
 {
-  auto input_vec = core::utils::generate_random_ints_vector(100, 0, 200);
+  auto input_vec = core::utils::generate_random_ints_vector(100000, 0, 200);
   quick_sort<int>(input_vec);
   REQUIRE(std::is_sorted(input_vec.begin(), input_vec.end()));
 }

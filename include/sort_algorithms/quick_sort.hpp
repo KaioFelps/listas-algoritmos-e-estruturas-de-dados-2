@@ -7,6 +7,13 @@
 namespace core::sort_algorithms::internal
 {
 
+size_t get_random_pivot(size_t first_el_pos, size_t last_el_pos)
+{
+  srand(time(NULL));
+  int range_size = first_el_pos - last_el_pos + 1;
+  return first_el_pos + (rand() % range_size);
+}
+
 /**
  * The Lomuto Partition Algorithm ensures that every element from `vec`
  * that is smaller than `pivot` is placed on its left and the bigger ones
@@ -92,18 +99,23 @@ void quick_sort(std::span<T> vec, size_t pivot_pos, uint8_t threshold)
   auto subvecs = calculate_subvectors(vec.size(), pivot_pos);
 
   auto left_subvec = vec.subspan(subvecs.left.offset, subvecs.left.count);
-  const auto left_subvec_pivot = subvecs.left.count - 1;
+  const auto left_subvec_pivot = get_random_pivot(0, left_subvec.size() - 1);
   quick_sort(left_subvec, left_subvec_pivot, threshold);
 
   auto right_subvec = vec.subspan(subvecs.right.offset, subvecs.right.count);
-  const auto right_subvec_pivot = subvecs.right.count - 1;
+  const auto right_subvec_pivot = get_random_pivot(0, right_subvec.size() - 1);
   quick_sort(right_subvec, right_subvec_pivot, threshold);
 }
 
 template <typename T> void quick_sort(std::span<T> vec, uint8_t threshold = 15)
 {
+  using internal::get_random_pivot;
+
   if (vec.size() <= 1) return;
-  quick_sort(vec, vec.size() - 1, threshold);
+
+  const auto pivot_pos = get_random_pivot(0, vec.size() - 1);
+  quick_sort(vec, pivot_pos, threshold);
+
   return insertion_sort(vec);
 }
 

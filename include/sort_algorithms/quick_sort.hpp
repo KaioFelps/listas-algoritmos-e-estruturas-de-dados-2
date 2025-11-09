@@ -7,6 +7,28 @@
 namespace core::sort_algorithms::internal
 {
 
+template <typename T> bool first_is_median(T &target, T &a, T &b)
+{
+  if (a < target && target < b) return true;
+  if (b < target && target < a) return true;
+  return false;
+}
+
+template <typename T> size_t get_pivot(std::span<T> &vec)
+{
+  const auto first_el_pos = 0;
+  const auto last_el_pos = vec.size() - 1;
+  const size_t middle_el_pos = first_el_pos + (last_el_pos - first_el_pos) / 2;
+
+  auto &first_el = vec[first_el_pos];
+  auto &middle_el = vec[middle_el_pos];
+  auto &last_el = vec[last_el_pos];
+
+  if (first_is_median(first_el, middle_el, last_el)) return first_el_pos;
+  if (first_is_median(middle_el, first_el, last_el)) return middle_el_pos;
+  return last_el_pos;
+}
+
 size_t get_random_pivot(size_t first_el_pos, size_t last_el_pos)
 {
   srand(time(NULL));
@@ -99,21 +121,21 @@ void quick_sort(std::span<T> vec, size_t pivot_pos, uint8_t threshold)
   auto subvecs = calculate_subvectors(vec.size(), pivot_pos);
 
   auto left_subvec = vec.subspan(subvecs.left.offset, subvecs.left.count);
-  const auto left_subvec_pivot = get_random_pivot(0, left_subvec.size() - 1);
+  const auto left_subvec_pivot = get_pivot(left_subvec);
   quick_sort(left_subvec, left_subvec_pivot, threshold);
 
   auto right_subvec = vec.subspan(subvecs.right.offset, subvecs.right.count);
-  const auto right_subvec_pivot = get_random_pivot(0, right_subvec.size() - 1);
+  const auto right_subvec_pivot = get_pivot(right_subvec);
   quick_sort(right_subvec, right_subvec_pivot, threshold);
 }
 
 template <typename T> void quick_sort(std::span<T> vec, uint8_t threshold = 15)
 {
-  using internal::get_random_pivot;
+  using internal::get_pivot;
 
   if (vec.size() <= 1) return;
 
-  const auto pivot_pos = get_random_pivot(0, vec.size() - 1);
+  const auto pivot_pos = get_pivot(vec);
   quick_sort(vec, pivot_pos, threshold);
 
   return insertion_sort(vec);

@@ -1,17 +1,34 @@
+#include "hash_table.hpp"
 #include "utils.hpp"
+#include <iostream>
 
 int main(/* int argc, char **argv */)
 {
-  int teste[] = {1, 2, 3, 4, 5, 10, 20};
-  core::utils::print_vector<int>(teste);
-  core::utils::swap<int>(teste, 2, 3);
-  core::utils::print_vector<int>(teste);
+  auto hash_table = core::hash_table::SCHashTable<int>(7);
 
-  auto foo = core::utils::generate_random_ints_vector(10, 999, 10000);
-  core::utils::print_vector<int>(foo);
+  hash_table.insert(0, 1);
+  hash_table.insert(3, 2);
+  hash_table.insert(11, 3);
+  hash_table.insert(12, 4);
+  hash_table.insert(6, 5);
+  hash_table.insert(14, 6);
 
-  auto bar = core::utils::generate_distinct_shuffled_ints_vector(10, 999);
-  core::utils::print_vector<int>(bar);
+  hash_table.remove(14);
+  hash_table.remove(14);
+
+  for (size_t i = 0; i < 15; i++)
+  {
+    std::cout << "hash_table[" << i << "] = ";
+    auto value = hash_table.get(i);
+
+    if (value)
+    {
+      std::cout << *value << ";\n";
+      continue;
+    }
+
+    std::cout << "undefined;\n";
+  }
 
   return 0;
 }

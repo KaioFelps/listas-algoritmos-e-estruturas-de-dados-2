@@ -130,6 +130,7 @@ TEST_CASE("it should correctly forward the value until list is empty in an "
       std::pair(35, 4), std::pair(42, 5), std::pair(49, 6)};
 
   auto hash_table = core::hash_table::OAHashTable<int>(7);
+  hash_table.forbid_resizing();
 
   for (const auto &pair : pairs)
   {
@@ -146,7 +147,7 @@ TEST_CASE("it should correctly forward the value until list is empty in an "
   REQUIRE(hash_table.size() == pairs.size());
 
   SECTION("it should throw an exception when trying to insert new keys into a"
-          "full hash table")
+          "full hash table that cannot resize")
   {
     REQUIRE_THROWS_AS(hash_table.insert(56, 10), std::runtime_error);
     REQUIRE(hash_table.size() == pairs.size());
@@ -199,4 +200,18 @@ TEST_CASE("it should prefer to upsert an existing key row rather than "
   REQUIRE(hash_table.size() == 1);
   REQUIRE(hash_table.get(element_2_key).has_value());
   REQUIRE(*hash_table.get(element_2_key) == 1000);
+}
+
+TEST_CASE("it should resize when table is getting full",
+          "[OAHashTable, internal]")
+{
+  auto hash_table = core::hash_table::OAHashTable<int>(2);
+  REQUIRE(hash_table.capacity() == 2);
+
+  REQUIRE_NOTHROW(hash_table.insert(0, 10));
+  REQUIRE_NOTHROW(hash_table.insert(1, 20));
+  REQUIRE_NOTHROW(hash_table.insert(2, 30));
+
+  REQUIRE(hash_table.size() == 3);
+  REQUIRE(hash_table.capacity() >= 4);
 }

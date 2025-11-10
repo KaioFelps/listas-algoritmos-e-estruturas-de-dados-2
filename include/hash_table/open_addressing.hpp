@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hash_table.hpp"
+#include "iostream"
 #include <cassert>
 #include <exception>
 #include <list>
@@ -75,14 +76,44 @@ private:
   };
 
   std::unique_ptr<Row[]> internal_list;
-  size_t table_size;
+  size_t internal_list_size;
   size_t _size;
+  bool forbid_resize;
 
-  size_t hash(K key) const { return key % this->table_size; }
+  size_t hash(K key) const { return key % this->internal_list_size; }
 
   size_t advance_hash(size_t hash, size_t steps) const
   {
-    return (hash + steps) % this->table_size;
+    return (hash + steps) % this->internal_list_size;
+  }
+
+  float load_factor() const
+  {
+    return (float)this->_size / (float)this->internal_list_size;
+  }
+
+  void maybe_resize()
+  {
+    const auto threshold = this->internal_list_size / 2.0;
+    if (this->_size <= threshold || this->forbid_resize) return;
+    this->resize(this->internal_list_size * 2);
+  }
+
+  void resize(size_t new_internal_list_size)
+  {
+    auto old_internal_list_size = this->internal_list_size;
+    auto old_list = std::move(this->internal_list);
+
+    this->internal_list_size = new_internal_list_size;
+    this->internal_list = std::make_unique<Row[]>(new_internal_list_size);
+    this->_size = 0;
+
+    for (size_t i = 0; i < old_internal_list_size; i++)
+    {
+      Row &row = old_list[i];
+      if (!row.is_occupied()) continue;
+      this->insert(row.element->first, row.element->second);
+    }
   }
 
   std::optional<size_t> find_internal_index_of(K key)
@@ -93,7 +124,7 @@ private:
     size_t steps = 0;
     auto probing = this->advance_hash(hash, steps);
 
-    while (steps < this->table_size)
+    while (steps < this->internal_list_size)
     {
       Row &row = this->internal_list[probing];
 
@@ -106,16 +137,24 @@ private:
   }
 
 public:
-  OAHashTable(size_t initial_size) : table_size(initial_size), _size(0)
+  OAHashTable(size_t capacity)
+      : internal_list_size(capacity), _size(0), forbid_resize(false)
   {
-    this->internal_list = std::make_unique<Row[]>(table_size);
+    this->internal_list = std::make_unique<Row[]>(internal_list_size);
   }
 
+  void forbid_resizing() { this->forbid_resize = true; }
+  void allow_resizing() { this->forbid_resize = false; }
+
   size_t size() const override final { return this->_size; }
+  size_t capacity() const { return this->internal_list_size; }
 
   void insert(K key, V value) noexcept(false) override final
   {
     using namespace internal;
+
+    this->maybe_resize();
+
     const auto hash = this->hash(key);
 
     Row *best_placement = nullptr;
@@ -124,7 +163,7 @@ public:
     size_t given_steps = 0;
     size_t probing = this->advance_hash(hash, given_steps);
 
-    while (given_steps < this->table_size)
+    while (given_steps < this->internal_list_size)
     {
       Row &row = this->internal_list[probing];
 

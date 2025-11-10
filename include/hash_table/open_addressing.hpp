@@ -39,7 +39,7 @@ private:
     bool can_receive_value(K key) const
     {
       using namespace internal;
-      if (this->state == State::Free) return true;
+      if (this->state != State::Occupied) return true;
 
       assert(this->element.has_value() &&
              "Non-free rows must have element, even if deleted.");
@@ -52,6 +52,8 @@ private:
       this->element = std::pair(key, value);
       this->state = internal::State::Occupied;
     }
+
+    void mark_as_deleted() { this->state = internal::State::Deleted; }
   };
 
   std::unique_ptr<Row[]> internal_list;
@@ -85,7 +87,6 @@ private:
         return probing;
       }
 
-      if (row.state != State::Deleted) break;
       probing = this->advance_hash(hash, ++steps);
     }
 
@@ -119,7 +120,7 @@ public:
       probing = this->advance_hash(hash, ++given_steps);
     }
 
-    throw new std::bad_alloc();
+    throw std::bad_alloc();
   }
 
   std::optional<V> get(K key) override final
@@ -133,7 +134,9 @@ public:
   {
     auto internal_index = this->find_internal_index_of(key);
     if (!internal_index) return;
-    this->internal_list[*internal_index].state = internal::State::Deleted;
+
+    Row &row = this->internal_list[*internal_index];
+    row.mark_as_deleted();
   }
 };
 

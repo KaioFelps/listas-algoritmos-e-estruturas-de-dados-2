@@ -7,7 +7,7 @@ TEST_CASE("it should be able to correctly insert and get elements",
           "[OAHashTable, external]")
 {
   std::vector<std::pair<size_t, int>> pairs = {
-      std::pair(0, 1),  std::pair(3, 2), std::pair(11, 3), std::pair(12, 4),
+      std::pair(0, 1),  std::pair(3, 2), std::pair(11, 3),
       std::pair(12, 4), std::pair(6, 5), std::pair(14, 6)};
 
   auto hash_table = core::hash_table::OAHashTable<int>(10);
@@ -16,12 +16,21 @@ TEST_CASE("it should be able to correctly insert and get elements",
   {
     REQUIRE_NOTHROW(hash_table.insert(pair.first, pair.second));
   }
+  REQUIRE_NOTHROW(hash_table.insert(14, 3));
 
   for (const auto &pair : pairs)
   {
     auto element = hash_table.get(pair.first);
     REQUIRE(element.has_value());
-    REQUIRE(*element == pair.second);
+
+    if (pair.first == 14)
+    {
+      REQUIRE(*element == 3);
+    }
+    else
+    {
+      REQUIRE(*element == pair.second);
+    }
   }
 }
 

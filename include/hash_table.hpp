@@ -7,6 +7,7 @@ namespace core::hash_table
 
 template <typename V, typename K> class HashTable
 {
+  virtual size_t size() const = 0;
   virtual void insert(K key, V value) noexcept(false) = 0;
   virtual std::optional<V> get(K key) = 0;
   virtual void remove(K key) = 0;

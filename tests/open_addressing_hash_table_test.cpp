@@ -32,6 +32,8 @@ TEST_CASE("it should be able to correctly insert and get elements",
       REQUIRE(*element == pair.second);
     }
   }
+
+  REQUIRE(hash_table.size() == pairs.size());
 }
 
 TEST_CASE("it should return `nullopt`s when trying to get a non-existing value",
@@ -44,6 +46,8 @@ TEST_CASE("it should return `nullopt`s when trying to get a non-existing value",
     auto element = hash_table.get(key);
     REQUIRE_FALSE(element.has_value());
   }
+
+  REQUIRE(hash_table.size() == 0);
 }
 
 TEST_CASE("it should remove a value by key", "[OAHashTable, external]")
@@ -51,13 +55,14 @@ TEST_CASE("it should remove a value by key", "[OAHashTable, external]")
   auto hash_table = core::hash_table::OAHashTable<int>(10);
 
   std::vector<std::pair<size_t, int>> pairs = {
-      std::pair(0, 1),  std::pair(3, 2), std::pair(11, 3), std::pair(12, 4),
+      std::pair(0, 1),  std::pair(3, 2), std::pair(11, 3),
       std::pair(12, 4), std::pair(6, 5), std::pair(14, 6)};
 
   for (const auto &pair : pairs)
   {
     REQUIRE_NOTHROW(hash_table.insert(pair.first, pair.second));
   }
+  REQUIRE(hash_table.size() == pairs.size());
 
   for (const auto &pair : pairs)
   {
@@ -69,6 +74,8 @@ TEST_CASE("it should remove a value by key", "[OAHashTable, external]")
     auto element = hash_table.get(key);
     REQUIRE_FALSE(element.has_value());
   }
+
+  REQUIRE(hash_table.size() == 0);
 }
 
 TEST_CASE("it should not assumpt the correct key have been deleted because a "
@@ -78,12 +85,14 @@ TEST_CASE("it should not assumpt the correct key have been deleted because a "
   auto hash_table = core::hash_table::OAHashTable<int>(10);
   hash_table.insert(10, 1);
   hash_table.insert(100, 2);
+  REQUIRE(hash_table.size() == 2);
 
   hash_table.remove(10);
   hash_table.remove(100);
 
   REQUIRE_FALSE(hash_table.get(10).has_value());
   REQUIRE_FALSE(hash_table.get(100).has_value());
+  REQUIRE(hash_table.size() == 0);
 }
 
 TEST_CASE("it should correctly handle collisions as long as there is space in "
@@ -108,6 +117,8 @@ TEST_CASE("it should correctly handle collisions as long as there is space in "
       REQUIRE(hash_table.get(pair.first).has_value());
     }
   }
+
+  REQUIRE(hash_table.size() == pairs.size());
 }
 
 TEST_CASE("it should correctly forward the value until list is empty in an "
@@ -132,11 +143,13 @@ TEST_CASE("it should correctly forward the value until list is empty in an "
       REQUIRE(hash_table.get(pair.first).has_value());
     }
   }
+  REQUIRE(hash_table.size() == pairs.size());
 
   SECTION("it should throw an exception when trying to insert new keys into a"
           "full hash table")
   {
-    REQUIRE_THROWS_AS(hash_table.insert(56, 10), std::bad_alloc);
+    REQUIRE_THROWS_AS(hash_table.insert(56, 10), std::runtime_error);
+    REQUIRE(hash_table.size() == pairs.size());
   }
 }
 
@@ -144,6 +157,7 @@ TEST_CASE("it should replace an already existing key",
           "[OAHashTable, internal]")
 {
   auto hash_table = core::hash_table::OAHashTable<int>(7);
+  REQUIRE(hash_table.size() == 0);
 
   const auto key = 0;
   hash_table.insert(key, 100);
@@ -152,6 +166,37 @@ TEST_CASE("it should replace an already existing key",
   hash_table.insert(key, new_element);
   auto just_added_element = hash_table.get(key);
 
+  REQUIRE(hash_table.size() == 1);
   REQUIRE(just_added_element.has_value());
   REQUIRE(*just_added_element == new_element);
+}
+
+TEST_CASE("it should prefer to upsert an existing key row rather than "
+          "inserting a new key in a free or deleted tombstone slot",
+          "[OAHashTable, internal]")
+{
+  auto hash_table = core::hash_table::OAHashTable<int>(2);
+  REQUIRE(hash_table.size() == 0);
+
+  // hash will generate 0 for both keys, the insertion must append the first
+  // inserted in the internal_list[0] and the second in internal_list[1] due to
+  // collision-handling.
+  const auto element_1_key = 2;
+  const auto element_2_key = 4;
+
+  hash_table.insert(element_1_key, 100);
+  hash_table.insert(element_2_key, 300);
+  REQUIRE(hash_table.size() == 2);
+
+  hash_table.remove(element_1_key);
+  REQUIRE(hash_table.size() == 1);
+  REQUIRE_FALSE(hash_table.get(element_1_key).has_value());
+
+  // this will be hashed and thus indexed to internal_list[0], but
+  // there is a row with this key already, thus it should be prefered
+  // over the tombstone and a new insertion should not happen.
+  hash_table.insert(element_2_key, 1000);
+  REQUIRE(hash_table.size() == 1);
+  REQUIRE(hash_table.get(element_2_key).has_value());
+  REQUIRE(*hash_table.get(element_2_key) == 1000);
 }

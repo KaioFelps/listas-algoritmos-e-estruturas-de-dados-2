@@ -36,32 +36,51 @@ private:
 
     Row() : element(std::nullopt), state(internal::State::Free) {}
 
-    bool can_receive_value(K key) const
-    {
-      using namespace internal;
-      if (this->state != State::Occupied) return true;
-
-      assert(this->element.has_value() &&
-             "Non-free rows must have element, even if deleted.");
-
-      return this->element->first == key;
-    }
-
     void set_element(K key, V value)
     {
       this->element = std::pair(key, value);
       this->state = internal::State::Occupied;
     }
 
-    void mark_as_deleted() { this->state = internal::State::Deleted; }
+    void soft_delete()
+    {
+      this->element = std::nullopt;
+      this->state = internal::State::Deleted;
+    }
+
+    bool is_occupied() const
+    {
+      return this->state == internal::State::Occupied;
+    }
+
+    bool is_free() const { return this->state == internal::State::Free; }
+    bool is_deleted() const { return this->state == internal::State::Deleted; }
+
+    bool is_insertable(const K &key) const
+    {
+      using namespace internal;
+
+      if (!this->is_occupied()) return true;
+      if (this->owns_key(key)) return true;
+      return false;
+    }
+
+    bool owns_key(const K &key) const
+    {
+      assert((!this->is_occupied() || this->element.has_value()) &&
+             "Occupied rows MUST have an element value.");
+
+      return this->element.has_value() && this->element->first == key;
+    }
   };
 
   std::unique_ptr<Row[]> internal_list;
   size_t table_size;
+  size_t _size;
 
-  size_t hash(K key) { return key % this->table_size; }
+  size_t hash(K key) const { return key % this->table_size; }
 
-  size_t advance_hash(size_t hash, size_t steps)
+  size_t advance_hash(size_t hash, size_t steps) const
   {
     return (hash + steps) % this->table_size;
   }
@@ -73,20 +92,13 @@ private:
 
     size_t steps = 0;
     auto probing = this->advance_hash(hash, steps);
-    while (probing != hash || steps == 0)
+
+    while (steps < this->table_size)
     {
       Row &row = this->internal_list[probing];
 
-      if (row.state == State::Free) break;
-
-      assert(row.element.has_value() &&
-             "Non-free rows must have elements, even if `State::Deleted`.");
-
-      if (row.state == State::Occupied && row.element->first == key)
-      {
-        return probing;
-      }
-
+      if (row.is_free()) break;
+      if (row.is_occupied() && row.owns_key(key)) return probing;
       probing = this->advance_hash(hash, ++steps);
     }
 
@@ -94,33 +106,59 @@ private:
   }
 
 public:
-  OAHashTable(size_t initial_size) : table_size(initial_size)
+  OAHashTable(size_t initial_size) : table_size(initial_size), _size(0)
   {
     this->internal_list = std::make_unique<Row[]>(table_size);
   }
+
+  size_t size() const override final { return this->_size; }
 
   void insert(K key, V value) noexcept(false) override final
   {
     using namespace internal;
     const auto hash = this->hash(key);
 
-    Row &row = this->internal_list[hash];
-    if (row.can_receive_value(key))
-    {
-      row.set_element(key, value);
-      return;
-    }
+    Row *best_placement = nullptr;
+    bool is_insertion = false;
 
-    size_t given_steps = 1;
+    size_t given_steps = 0;
     size_t probing = this->advance_hash(hash, given_steps);
-    while (probing != hash)
+
+    while (given_steps < this->table_size)
     {
       Row &row = this->internal_list[probing];
-      if (row.can_receive_value(key)) return row.set_element(key, value);
+
+      // If it's free it means this key haven't ever been inserted before,
+      // otherwise it would be deleted.
+      if (row.is_free())
+      {
+        best_placement = &row;
+        is_insertion = true;
+        break;
+      }
+
+      if (row.is_occupied() && row.owns_key(key))
+      {
+        best_placement = &row;
+        is_insertion = false;
+        break;
+      }
+
+      if (row.is_deleted() && !best_placement)
+      {
+        best_placement = &row;
+        // it is still an insertion, since removal decreases the hash table's
+        // size.
+        is_insertion = true;
+      }
+
       probing = this->advance_hash(hash, ++given_steps);
     }
 
-    throw std::bad_alloc();
+    if (!best_placement) throw std::runtime_error("Hash table is full");
+
+    best_placement->set_element(key, value);
+    if (is_insertion) this->_size++;
   }
 
   std::optional<V> get(K key) override final
@@ -136,7 +174,11 @@ public:
     if (!internal_index) return;
 
     Row &row = this->internal_list[*internal_index];
-    row.mark_as_deleted();
+    if (row.is_occupied())
+    {
+      row.soft_delete();
+      this->_size--;
+    }
   }
 };
 

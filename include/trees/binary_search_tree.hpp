@@ -22,6 +22,14 @@ private:
   std::optional<std::unique_ptr<Node>> root;
   V *search(K &key, Node &node) const;
 
+  size_t count(Node &node)
+  {
+    size_t counter = 1;
+    if (node.left_node.has_value()) counter += count(*node.left_node.value());
+    if (node.right_node.has_value()) counter += count(*node.right_node.value());
+    return counter;
+  }
+
   size_t height(Node &node)
   {
     size_t counter = 1;
@@ -49,7 +57,11 @@ public:
   /**
    * Counts nodes from this tree instance.
    */
-  size_t count() const {}
+  size_t count() const
+  {
+    if (!this->root.has_value()) return 0;
+    return count(*this->root.value());
+  }
   /**
    * Gets the height of the tree (i.e., the deepness of its deepest node).
    */
